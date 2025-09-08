@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Computer Hardware Quiz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f0f4f8;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #eee;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: background 0.3s;
+    }
+
+    body.dark-mode .container {
+      background: #2c2c2c;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .question {
+      font-size: 1.2rem;
+      margin: 20px 0;
+    }
+
+    .options {
+      list-style: none;
+      padding: 0;
+    }
+
+    .options li {
+      margin-bottom: 10px;
+    }
+
+    .options button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      background: #f9f9f9;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+
+    .options button:hover {
+      background: #dff3ff;
+    }
+
+    .progress {
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #007bff;
+      width: 0%;
+      transition: width 0.4s;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .timer {
+      font-weight: bold;
+    }
+
+    .dark-toggle {
+      cursor: pointer;
+      padding: 6px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .result {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧠 Computer Hardware Quiz</h1>
+  <div class="progress">
+    <div class="progress-bar" id="progressBar">
+    </div>
+  </div>
+  <div class="question" id="question">Loading question...</div>
+  <ul class="options" id="options"></ul>
+
+  <div class="footer">
+    <div class="timer">⏱️ Time left: <span id="timer">15</span>s</div>
+    <button class="dark-toggle" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+  </div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+  const quiz = [
+    {
+      question: "What is considered the 'brain' of the computer?",
+      options: ["RAM", "GPU", "CPU", "SSD"],
+      answer: "CPU"
+    },
+    {
+      question: "Which is better for gaming performance?",
+      options: ["RTX 3090 Ti", "GTX 1060", "RTX 4060", "Intel HD Graphics"],
+      answer: "RTX 3090 Ti"
+    },
+    {
+      question: "Recommended amount of RAM for 2023 PCs?",
+      options: ["4GB", "8GB", "16GB", "32GB"],
+      answer: "16GB"
+    },
+    {
+      question: "What type of storage is fastest?",
+      options: ["HDD", "USB", "DVD", "NVMe SSD"],
+      answer: "NVMe SSD"
+    },
+    {
+      question: "Which part handles graphics rendering?",
+      options: ["CPU", "RAM", "GPU", "Motherboard"],
+      answer: "GPU"
+    }
+  ];
+
+  let current = 0;
+  let score = 0;
+  let timeLeft = 15;
+  let timerInterval;
+
+  const questionEl = document.getElementById("question");
+  const optionsEl = document.getElementById("options");
+  const timerEl = document.getElementById("timer");
+  const resultEl = document.getElementById("result");
+  const progressBar = document.getElementById("progressBar");
+
+  function showQuestion() {
+    clearInterval(timerInterval);
+    timeLeft = 15;
+    timerEl.textContent = timeLeft;
+
+    const q = quiz[current];
+    questionEl.textContent = `${current + 1}. ${q.question}`;
+    optionsEl.innerHTML = "";
+
+    q.options.forEach(option => {
+      const btn = document.createElement("button");
+      btn.textContent = option;
+      btn.onclick = () => selectAnswer(option);
+      const li = document.createElement("li");
+      li.appendChild(btn);
+      optionsEl.appendChild(li);
+    });
+
+    progressBar.style.width = ((current) / quiz.length) * 100 + "%";
+
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        selectAnswer(null); // timeout
+      }
+    }, 1000);
+  }
+
+  function selectAnswer(answer) {
+    clearInterval(timerInterval);
+
+    const correct = quiz[current].answer;
+    if (answer === correct) {
+      score++;
+    }
+
+    current++;
+    if (current < quiz.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    questionEl.textContent = "";
+    optionsEl.innerHTML = "";
+    progressBar.style.width = "100%";
+
+    const percent = Math.round((score / quiz.length) * 100);
+    const highScore = Math.max(percent, getHighScore());
+    setHighScore(highScore);
+
+    resultEl.innerHTML = `
+      <h2>✅ Quiz Complete!</h2>
+      <p>Your Score: <strong>${score} / ${quiz.length}</strong> (${percent}%)</p>
+      <p>🏆 High Score: <strong>${highScore}%</strong></p>
+      <button onclick="restartQuiz()">🔁 Restart Quiz</button>
+    `;
+  }
+
+  function restartQuiz() {
+    current = 0;
+    score = 0;
+    resultEl.innerHTML = "";
+    showQuestion();
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+  }
+
+  function getHighScore() {
+    return parseInt(localStorage.getItem("hardwareQuizHighScore") || "0");
+  }
+
+  function setHighScore(score) {
+    localStorage.setItem("hardwareQuizHighScore", score);
+  }
+
+
+  showQuestion();
+</script>
+
+</body>
+</html>
